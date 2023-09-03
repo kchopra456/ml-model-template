@@ -60,7 +60,7 @@ def _build_contrastive_output(
 
 def build_towers(
     data,
-    tower_dim=(128, 64),
+    tower_dim=[(128, 64)],
     neg_sampler=["in-batch"],
     embedding_dims=None,
     logq_sampling_correction=False,
@@ -69,13 +69,20 @@ def build_towers(
     schema = data.schema
     if not neg_sampler:
         neg_sampler = ["in-batch"]
+
+    user_tower_dim = tower_dim
+    item_tower_dim = tower_dim
+    if isinstance(tower_dim, dict):
+        user_tower_dim = tower_dim['user']
+        item_tower_dim = tower_dim['item']
+
     # create user schema using USER tag
     user_schema = schema.select_by_tag(Tags.USER)
     # create user (query) tower input block
     user_inputs = mm.InputBlockV2(user_schema)
     # create user (query) encoder block
     query = mm.Encoder(
-        user_inputs, mm.MLPBlock(tower_dim, no_activation_last_layer=True)
+        user_inputs, mm.MLPBlock(user_tower_dim, no_activation_last_layer=True)
     )
 
     # create item schema using ITEM tag
@@ -84,7 +91,7 @@ def build_towers(
     item_inputs = mm.InputBlockV2(item_schema, categorical=item_categorical)
     # create item (candidate) encoder block
     candidate = mm.Encoder(
-        item_inputs, mm.MLPBlock(tower_dim, no_activation_last_layer=True)
+        item_inputs, mm.MLPBlock(item_tower_dim, no_activation_last_layer=True)
     )
 
     def _switch_emb_dims(block, features):
