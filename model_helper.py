@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import merlin.io
-import merlin.models.tensorflow as mm
+import merlin.models.tf as mm
 import numpy as np
 import tensorflow as tf
 from merlin.models.tf.core.encoder import TopKEncoder
@@ -280,7 +280,7 @@ def recommendation_centric_metrics(topk_model, ds, catalog, batch_size=2048):
         if rec_popularity:
             novelty_scores.append(1 / np.mean(rec_popularity))
     # Calculate overall novelty
-    overall_novelty = np.mean(novelty_scores)    
+    overall_novelty = np.mean(novelty_scores)
 
     # Calculate the intersection of unique recommended items and catalog items
     covered_items = unique_recommended_items.intersection(catalog_items)
