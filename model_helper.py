@@ -3,7 +3,7 @@ from collections import defaultdict
 
 import matplotlib.pyplot as plt
 import merlin.io
-import merlin.models as mm
+import merlin.models.tf as mm
 import numpy as np
 import tensorflow as tf
 from merlin.models.tf.core.encoder import TopKEncoder
