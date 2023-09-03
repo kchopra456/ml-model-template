@@ -96,7 +96,7 @@ def build_towers(
         if embedding_dims.get("user"):
             _switch_emb_dims(user_inputs, embedding_dims.get("user"))
         if embedding_dims.get("item"):
-            _switch_emb_dims(item_inputs, embedding_dims.get("user"))
+            _switch_emb_dims(item_inputs, embedding_dims.get("item"))
 
     kwargs = {
         "store_negative_ids": True,
