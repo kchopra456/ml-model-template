@@ -1,4 +1,5 @@
 import math
+import warnings
 from collections import defaultdict
 
 import matplotlib.pyplot as plt
@@ -14,6 +15,8 @@ from merlin.models.utils.dataset import unique_rows_by_features
 from merlin.schema import ColumnSchema, Schema, Tags
 from tensorflow.keras.callbacks import Callback
 
+warnings.filterwarnings("ignore")
+
 
 def topk_metrics_aggregator(top_ks: list = [100, 10]):
     return [
@@ -23,11 +26,11 @@ def topk_metrics_aggregator(top_ks: list = [100, 10]):
 
 
 def _build_contrastive_output(
-    data,
-    logq_sampling_correction=False,
-    logits_temperature=1,
-    negative_samplers=["in-batch"],
-    store_negative_ids=True,
+        data,
+        logq_sampling_correction=False,
+        logits_temperature=1,
+        negative_samplers=["in-batch"],
+        store_negative_ids=True,
 ):
     schema = data.schema
     item_id = schema.select_by_tag(Tags.ITEM_ID).column_names[0]
@@ -40,31 +43,31 @@ def _build_contrastive_output(
         if items_frequencies.shape[0] < item_id_cardinality:
             print("[INFO] hacked the logq correction to match item cardinality")
             items_frequencies = items_frequencies.reindex(
-                range(item_id_cardinality), fill_value=0
+                    range(item_id_cardinality), fill_value=0
             ).values
 
         post_logits = PopularityLogitsCorrection(
-            items_frequencies,
-            schema=schema,
+                items_frequencies,
+                schema=schema,
         )
 
     return mm.ContrastiveOutput(
-        DotProduct(),
-        logits_temperature=logits_temperature,
-        post=post_logits,
-        negative_samplers=negative_samplers,
-        schema=schema.select_by_tag(Tags.ITEM_ID),
-        store_negative_ids=store_negative_ids,
+            DotProduct(),
+            logits_temperature=logits_temperature,
+            post=post_logits,
+            negative_samplers=negative_samplers,
+            schema=schema.select_by_tag(Tags.ITEM_ID),
+            store_negative_ids=store_negative_ids,
     )
 
 
 def build_towers(
-    data,
-    tower_dim=[(128, 64)],
-    neg_sampler=["in-batch"],
-    embedding_dims=None,
-    logq_sampling_correction=False,
-    item_categorical=None,
+        data,
+        tower_dim=[(128, 64)],
+        neg_sampler=["in-batch"],
+        embedding_dims=None,
+        logq_sampling_correction=False,
+        item_categorical=None,
 ):
     schema = data.schema
     if not neg_sampler:
@@ -82,7 +85,7 @@ def build_towers(
     user_inputs = mm.InputBlockV2(user_schema)
     # create user (query) encoder block
     query = mm.Encoder(
-        user_inputs, mm.MLPBlock(user_tower_dim, no_activation_last_layer=True)
+            user_inputs, mm.MLPBlock(user_tower_dim, no_activation_last_layer=True)
     )
 
     # create item schema using ITEM tag
@@ -91,7 +94,7 @@ def build_towers(
     item_inputs = mm.InputBlockV2(item_schema, categorical=item_categorical)
     # create item (candidate) encoder block
     candidate = mm.Encoder(
-        item_inputs, mm.MLPBlock(item_tower_dim, no_activation_last_layer=True)
+            item_inputs, mm.MLPBlock(item_tower_dim, no_activation_last_layer=True)
     )
 
     def _switch_emb_dims(block, features):
@@ -123,11 +126,11 @@ default_plot_metrics = {
 
 
 def plot_metrics(
-    train_history,
-    val_history=None,
-    metrics=default_plot_metrics,
-    figsize=None,
-    max_row=4,
+        train_history,
+        val_history=None,
+        metrics=default_plot_metrics,
+        figsize=None,
+        max_row=4,
 ):
     # Create a figure and axis
     X = math.ceil(len(metrics) / max_row)
@@ -173,12 +176,12 @@ def merge_model_history(*history):
 
 # hack block, as Merlin top_k_encoder is broken
 def batch_predict(
-    self,
-    dataset: merlin.io.Dataset,
-    batch_size: int,
-    output_schema=None,
-    index=None,
-    **kwargs,
+        self,
+        dataset: merlin.io.Dataset,
+        batch_size: int,
+        output_schema=None,
+        index=None,
+        **kwargs,
 ) -> merlin.io.Dataset:
     """Batched prediction using Dask.
     Parameters
@@ -209,8 +212,8 @@ def batch_predict(
     if hasattr(dataset, "schema"):
         if not set(self.schema.column_names).issubset(set(dataset.schema.column_names)):
             raise ValueError(
-                f"Model schema {self.schema.column_names} does not match dataset schema"
-                + f" {dataset.schema.column_names}"
+                    f"Model schema {self.schema.column_names} does not match dataset schema"
+                    + f" {dataset.schema.column_names}"
             )
 
     # Check if merlin-dataset is passed
@@ -233,30 +236,30 @@ def batch_predict(
 
 
 def to_top_k_encoder(
-    model,
-    candidates: merlin.io.Dataset = None,
-    candidate_id=Tags.ITEM_ID,
-    strategy="brute-force-topk",
-    k: int = 10,
-    batch_size=512,
+        model,
+        candidates: merlin.io.Dataset = None,
+        candidate_id=Tags.ITEM_ID,
+        strategy="brute-force-topk",
+        k: int = 10,
+        batch_size=512,
 ):
     output_schema = model.schema.select_by_tag(candidate_id)
 
     # https://github.com/NVIDIA-Merlin/models/blob/stable/merlin/models/tf/models/base.py#L2479
     candidates_embeddings = batch_predict(
-        model.candidate_encoder,
-        candidates,
-        batch_size=batch_size,
-        output_schema=output_schema,
-        index=candidate_id,
-        output_concat_func=np.concatenate,
+            model.candidate_encoder,
+            candidates,
+            batch_size=batch_size,
+            output_schema=output_schema,
+            index=candidate_id,
+            output_concat_func=np.concatenate,
     )
     return TopKEncoder(
-        model.query_encoder,
-        topk_layer=strategy,
-        k=k,
-        candidates=candidates_embeddings,
-        target=model.encoder._schema.select_by_tag(candidate_id).first.name,
+            model.query_encoder,
+            topk_layer=strategy,
+            k=k,
+            candidates=candidates_embeddings,
+            target=model.encoder._schema.select_by_tag(candidate_id).first.name,
     )
 
 
@@ -301,14 +304,14 @@ def evaluate_model(model, ds, schema, topk=10, batch_size=1024, item_id="movie_i
     candidate_features = get_candidates(ds)
 
     topk_model = to_top_k_encoder(
-        model, candidate_features, k=topk, batch_size=batch_size
+            model, candidate_features, k=topk, batch_size=batch_size
     )
     topk_model.compile(run_eagerly=False, metrics=topk_metrics_aggregator())
 
     eval_loader = mm.Loader(ds, batch_size=batch_size).map(mm.ToTarget(schema, item_id))
     catalog = ds.to_ddf().compute()[item_id].value_counts().to_dict()
     return topk_model.evaluate(
-        eval_loader, return_dict=True
+            eval_loader, return_dict=True
     ) | recommendation_centric_metrics(topk_model, ds, catalog)
 
 
