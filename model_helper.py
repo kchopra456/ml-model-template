@@ -71,7 +71,7 @@ def build_towers(
         logq_sampling_correction=False,
         item_categorical=None,
         regularize=None,
-        **kwargs
+        logits_temperature=1
 ):
     schema = data.schema
     if not neg_sampler:
@@ -128,7 +128,8 @@ def build_towers(
     _kwargs = {
         "store_negative_ids": True,
         "logq_sampling_correction": logq_sampling_correction,
-    } | kwargs
+        "logits_temperature": logits_temperature
+    }
     outputs = _build_contrastive_output(data, negative_samplers=neg_sampler, **_kwargs)
 
     return mm.TwoTowerModelV2(query, candidate, outputs=outputs)
