@@ -70,7 +70,8 @@ def build_towers(
         embedding_dims=None,
         logq_sampling_correction=False,
         item_categorical=None,
-        regularize=None
+        regularize=None,
+        **kwargs
 ):
     schema = data.schema
     if not neg_sampler:
@@ -124,11 +125,11 @@ def build_towers(
         if embedding_dims.get("item"):
             _switch_emb_dims(item_inputs, embedding_dims.get("item"))
 
-    kwargs = {
+    _kwargs = {
         "store_negative_ids": True,
         "logq_sampling_correction": logq_sampling_correction,
-    }
-    outputs = _build_contrastive_output(data, negative_samplers=neg_sampler, **kwargs)
+    } | kwargs
+    outputs = _build_contrastive_output(data, negative_samplers=neg_sampler, **_kwargs)
 
     return mm.TwoTowerModelV2(query, candidate, outputs=outputs)
 
