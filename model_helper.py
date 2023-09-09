@@ -14,6 +14,8 @@ from merlin.models.utils import schema_utils
 from merlin.models.utils.dataset import unique_rows_by_features
 from merlin.schema import ColumnSchema, Schema, Tags
 from tensorflow.keras.callbacks import Callback
+from tensorflow.keras import regularizers
+
 
 warnings.filterwarnings("ignore")
 
