@@ -28,7 +28,7 @@ def topk_metrics_aggregator(top_ks: list = [100, 10]):
 def _build_contrastive_output(
         data,
         logq_sampling_correction=False,
-        logits_temperature=1,
+        logits_temperature=0.1,
         negative_samplers=["in-batch"],
         store_negative_ids=True,
 ):
@@ -85,7 +85,12 @@ def build_towers(
     user_inputs = mm.InputBlockV2(user_schema)
     # create user (query) encoder block
     query = mm.Encoder(
-            user_inputs, mm.MLPBlock(user_tower_dim, no_activation_last_layer=True)
+            user_inputs, mm.MLPBlock(user_tower_dim,
+                                     no_activation_last_layer=True,
+                                    dropout=0.1,
+                                    kernel_regularizer=regularizers.l2(1e-5),
+                                    bias_regularizer=regularizers.l2(1e-6),
+                                    )
     )
 
     # create item schema using ITEM tag
@@ -94,7 +99,12 @@ def build_towers(
     item_inputs = mm.InputBlockV2(item_schema, categorical=item_categorical)
     # create item (candidate) encoder block
     candidate = mm.Encoder(
-            item_inputs, mm.MLPBlock(item_tower_dim, no_activation_last_layer=True)
+            item_inputs, mm.MLPBlock(item_tower_dim,
+                                    no_activation_last_layer=True,
+                                    dropout=0.1,
+                                    kernel_regularizer=regularizers.l2(1e-5),
+                                    bias_regularizer=regularizers.l2(1e-6),
+                                    )
     )
 
     def _switch_emb_dims(block, features):
