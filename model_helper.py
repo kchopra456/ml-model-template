@@ -70,6 +70,7 @@ def build_towers(
         embedding_dims=None,
         logq_sampling_correction=False,
         item_categorical=None,
+        regularize=None
 ):
     schema = data.schema
     if not neg_sampler:
@@ -81,6 +82,13 @@ def build_towers(
         user_tower_dim = tower_dim['user']
         item_tower_dim = tower_dim['item']
 
+    if regularize is None:
+        regularize = dict(
+            dropout=0.1,
+            kernel_regularizer=regularizers.l2(1e-5),
+            bias_regularizer=regularizers.l2(1e-6),
+        )
+
     # create user schema using USER tag
     user_schema = schema.select_by_tag(Tags.USER)
     # create user (query) tower input block
@@ -89,9 +97,7 @@ def build_towers(
     query = mm.Encoder(
             user_inputs, mm.MLPBlock(user_tower_dim,
                                      no_activation_last_layer=True,
-                                    dropout=0.1,
-                                    kernel_regularizer=regularizers.l2(1e-5),
-                                    bias_regularizer=regularizers.l2(1e-6),
+                                    **regularize
                                     )
     )
 
@@ -103,9 +109,7 @@ def build_towers(
     candidate = mm.Encoder(
             item_inputs, mm.MLPBlock(item_tower_dim,
                                     no_activation_last_layer=True,
-                                    dropout=0.1,
-                                    kernel_regularizer=regularizers.l2(1e-5),
-                                    bias_regularizer=regularizers.l2(1e-6),
+                                    **regularize
                                     )
     )
 
